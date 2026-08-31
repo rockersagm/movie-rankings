@@ -73,6 +73,13 @@ button.person-btn { min-width: 140px; padding: 0.8rem; }
   color: var(--accent);
   font-variant-numeric: tabular-nums;
 }
+.chart-delta {
+  flex: 0 0 auto;
+  width: 2.6rem;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
 .drag-handle { cursor: grab; color: var(--muted); }
 .movie-title-block { flex: 0 0 auto; min-width: 220px; display: flex; flex-direction: column; gap: 0.15rem; }
 .movie-title { flex: 0 0 auto; }
@@ -80,8 +87,8 @@ button.person-btn { min-width: 140px; padding: 0.8rem; }
 .movie-meta { color: var(--muted); font-size: 0.78rem; }
 .movie-note {
   flex: 1;
-  resize: vertical;
-  min-height: 1.6em;
+  resize: none;
+  height: 2.4rem;
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -116,6 +123,7 @@ th:hover { color: var(--text); }
 .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; }
 .stat-label { display: block; color: var(--muted); font-size: 0.8rem; }
 .stat-value { display: block; font-size: 1.1rem; font-weight: 600; margin-top: 0.2rem; }
+.stat-value.stat-waiting { color: var(--muted); font-weight: 400; font-size: 0.95rem; }
 
 .diff-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
 .diff-card h3 { margin: 0 0 0.4rem; font-size: 1rem; }

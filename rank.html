@@ -36,6 +36,7 @@
     const person = requirePerson();
     let movies = [];
     let draftByMovie = {};
+    let bigPictureDenseRank = {};
 
     if (person) {
       document.getElementById('person-name').textContent = person;
@@ -57,6 +58,14 @@
       rankings.forEach(r => { draftByMovie[r.movie_id] = r; });
 
       const active = movies.filter(m => m.status === 'active');
+
+      // Big Picture's raw rank includes the abstained movie, so re-rank
+      // it densely among just the active movies for an apples-to-apples
+      // "how far have you moved this from Big Picture's order" indicator.
+      bigPictureDenseRank = {};
+      active.slice().sort((a, b) => a.big_picture_rank - b.big_picture_rank)
+        .forEach((m, i) => { bigPictureDenseRank[m.movie_id] = i + 1; });
+
       active.sort((a, b) => {
         const ra = draftByMovie[a.movie_id] ? draftByMovie[a.movie_id].rank : null;
         const rb = draftByMovie[b.movie_id] ? draftByMovie[b.movie_id].rank : null;
@@ -96,6 +105,7 @@
 
       li.innerHTML =
         '<span class="movie-rank"></span>' +
+        '<span class="chart-delta"></span>' +
         '<span class="drag-handle">&#8942;&#8942;</span>' +
         '<span class="movie-title-block">' +
           '<span class="movie-title">' + escapeHtml(movie.title) + ' <span class="movie-year">(' + movie.year + ')</span></span>' +
@@ -107,10 +117,20 @@
       return li;
     }
 
+    function formatChartDelta(delta) {
+      if (delta > 0) return '<span class="delta-up">&#9650;' + delta + '</span>';
+      if (delta < 0) return '<span class="delta-down">&#9660;' + Math.abs(delta) + '</span>';
+      return '<span class="delta-flat">–</span>';
+    }
+
     function renumberRows() {
       const rows = document.querySelectorAll('#ranking-list .movie-row');
       rows.forEach((row, index) => {
-        row.querySelector('.movie-rank').textContent = index + 1;
+        const currentRank = index + 1;
+        row.querySelector('.movie-rank').textContent = currentRank;
+        const movieId = Number(row.dataset.movieId);
+        const bpRank = bigPictureDenseRank[movieId];
+        row.querySelector('.chart-delta').innerHTML = formatChartDelta(bpRank - currentRank);
       });
     }
 

@@ -90,16 +90,18 @@
     function renderStats() {
       const s = revealData.stats;
       const panel = document.getElementById('stats-panel');
+      const waiting = '<span class="stat-value stat-waiting">Waiting on both…</span>';
       panel.innerHTML =
-        '<div class="stat"><span class="stat-label">Agreement score</span><span class="stat-value">' + s.agreement_score.toFixed(2) + '</span></div>' +
-        '<div class="stat"><span class="stat-label">Andrew&rsquo;s #1</span><span class="stat-value">' + escapeHtml(s.andrew_number_one) + '</span></div>' +
-        '<div class="stat"><span class="stat-label">Amelia&rsquo;s #1</span><span class="stat-value">' + escapeHtml(s.amelia_number_one) + (s.same_number_one ? ' 🎯 same pick!' : '') + '</span></div>' +
-        '<div class="stat"><span class="stat-label">Biggest shared love</span><span class="stat-value">' + escapeHtml(s.biggest_shared_love.title) + '</span></div>' +
-        '<div class="stat"><span class="stat-label">Biggest shared hate</span><span class="stat-value">' + escapeHtml(s.biggest_shared_hate.title) + '</span></div>' +
-        '<div class="stat"><span class="stat-label">Biggest disagreement</span><span class="stat-value">' + escapeHtml(s.biggest_disagreement.title) + ' (Δ' + s.biggest_disagreement.delta + ')</span></div>';
+        '<div class="stat"><span class="stat-label">Agreement score</span>' + (s.both_complete ? '<span class="stat-value">' + s.agreement_score.toFixed(2) + '</span>' : waiting) + '</div>' +
+        '<div class="stat"><span class="stat-label">Andrew&rsquo;s #1</span><span class="stat-value">' + (s.andrew_number_one ? escapeHtml(s.andrew_number_one) : '—') + '</span></div>' +
+        '<div class="stat"><span class="stat-label">Amelia&rsquo;s #1</span><span class="stat-value">' + (s.amelia_number_one ? escapeHtml(s.amelia_number_one) : '—') + (s.same_number_one ? ' 🎯 same pick!' : '') + '</span></div>' +
+        '<div class="stat"><span class="stat-label">Biggest shared love</span>' + (s.biggest_shared_love ? '<span class="stat-value">' + escapeHtml(s.biggest_shared_love.title) + '</span>' : waiting) + '</div>' +
+        '<div class="stat"><span class="stat-label">Biggest shared hate</span>' + (s.biggest_shared_hate ? '<span class="stat-value">' + escapeHtml(s.biggest_shared_hate.title) + '</span>' : waiting) + '</div>' +
+        '<div class="stat"><span class="stat-label">Biggest disagreement</span>' + (s.biggest_disagreement ? '<span class="stat-value">' + escapeHtml(s.biggest_disagreement.title) + ' (Δ' + s.biggest_disagreement.delta + ')</span>' : waiting) + '</div>';
     }
 
     function formatDelta(d) {
+      if (d == null) return '—';
       if (d > 0) return '<span class="delta-up">+' + d + '</span>';
       if (d < 0) return '<span class="delta-down">' + d + '</span>';
       return '<span class="delta-flat">0</span>';
@@ -107,9 +109,11 @@
 
     function renderTable() {
       const rows = revealData.movies.slice().sort((a, b) => {
-        let cmp;
-        if (typeof a[sortKey] === 'string') cmp = a[sortKey].localeCompare(b[sortKey]);
-        else cmp = a[sortKey] - b[sortKey];
+        const av = a[sortKey], bv = b[sortKey];
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        const cmp = typeof av === 'string' ? av.localeCompare(bv) : av - bv;
         return sortAsc ? cmp : -cmp;
       });
       const body = document.getElementById('compare-body');
@@ -118,11 +122,11 @@
         const tr = document.createElement('tr');
         tr.className = 'movie-summary-row';
         tr.innerHTML =
-          '<td>' + m.combined_rank + '</td>' +
+          '<td>' + (m.combined_rank == null ? '—' : m.combined_rank) + '</td>' +
           '<td>' + escapeHtml(m.title) + ' <span class="movie-year">(' + m.year + ')</span></td>' +
           '<td>' + (m.andrew_rank == null ? '—' : m.andrew_rank) + '</td>' +
           '<td>' + (m.amelia_rank == null ? '—' : m.amelia_rank) + '</td>' +
-          '<td>' + m.delta + '</td>' +
+          '<td>' + (m.delta == null ? '—' : m.delta) + '</td>' +
           '<td>#' + m.big_picture_rank + '</td>' +
           '<td>' + formatDelta(m.big_picture_delta) + '</td>';
 
