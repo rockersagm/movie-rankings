@@ -69,7 +69,9 @@
       active.sort((a, b) => {
         const ra = draftByMovie[a.movie_id] ? draftByMovie[a.movie_id].rank : null;
         const rb = draftByMovie[b.movie_id] ? draftByMovie[b.movie_id].rank : null;
-        if (ra == null && rb == null) return a.movie_id - b.movie_id;
+        // No saved draft yet — start from Big Picture's own order, not an
+        // arbitrary one, so an untouched ranking still means something.
+        if (ra == null && rb == null) return a.big_picture_rank - b.big_picture_rank;
         if (ra == null) return 1;
         if (rb == null) return -1;
         return ra - rb;
@@ -79,6 +81,21 @@
       list.innerHTML = '';
       active.forEach(m => list.appendChild(buildMovieRow(m)));
       renumberRows();
+
+      // First visit, nothing saved yet: register that starting position
+      // (Big Picture's order) right away — awaited, not the debounced
+      // scheduleSave, since a quick nav to reveal.html would otherwise
+      // cancel the pending save before it ever fires.
+      if (rankings.length === 0) {
+        const statusEl = document.getElementById('save-status');
+        statusEl.textContent = 'Saving…';
+        try {
+          await apiPost('saveRanking', { person, rankings: currentRankings() });
+          statusEl.textContent = 'Saved';
+        } catch (err) {
+          statusEl.textContent = 'Save failed: ' + err.message;
+        }
+      }
 
       Sortable.create(list, {
         handle: '.drag-handle',
