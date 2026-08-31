@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>25 for '25</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="picker">
+    <h1>25 for '25</h1>
+    <p>Who's ranking?</p>
+    <div class="picker-buttons">
+      <button id="btn-andrew" class="person-btn">Andrew</button>
+      <button id="btn-amelia" class="person-btn">Amelia</button>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    function choose(person) {
+      setPerson(person);
+      window.location.href = 'rank.html';
+    }
+    document.getElementById('btn-andrew').addEventListener('click', () => choose('Andrew'));
+    document.getElementById('btn-amelia').addEventListener('click', () => choose('Amelia'));
+  </script>
+</body>
+</html>

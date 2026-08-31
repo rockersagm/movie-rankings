@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rank — 25 for '25</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <h1>25 for '25</h1>
+    <div class="whoami">Ranking as <strong id="person-name"></strong> — <a href="#" id="switch-person">not you?</a></div>
+  </header>
+
+  <main id="app">
+    <p id="loading">Loading…</p>
+
+    <section id="locked-view" class="hidden">
+      <p class="banner">Your ranking is submitted and locked.</p>
+      <ol id="locked-list" class="movie-list read-only"></ol>
+      <button id="reset-btn" class="danger">Reset my submission</button>
+      <div id="waiting-area"></div>
+    </section>
+
+    <section id="edit-view" class="hidden">
+      <p class="hint">Drag to reorder — top is your #1. Add a short note to each if you like.</p>
+      <ol id="ranking-list" class="movie-list"></ol>
+
+      <h2>Abstained</h2>
+      <div id="abstained-item" class="abstained"></div>
+
+      <div class="save-status" id="save-status"></div>
+      <button id="submit-btn" class="primary">Submit my ranking</button>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const person = requirePerson();
+    let movies = [];
+    let draftByMovie = {};
+    let pollTimer = null;
+
+    if (person) {
+      document.getElementById('person-name').textContent = person;
+      document.getElementById('switch-person').addEventListener('click', (e) => {
+        e.preventDefault();
+        localStorage.removeItem('movieRankingsPerson');
+        window.location.href = 'index.html';
+      });
+      init();
+    }
+
+    async function init() {
+      try {
+        const status = await apiGet('status');
+        document.getElementById('loading').classList.add('hidden');
+        if (status[person] && status[person].locked) {
+          await renderLocked(status);
+        } else {
+          await renderEditable();
+        }
+      } catch (err) {
+        document.getElementById('loading').textContent =
+          'Could not reach the backend — check WEB_APP_URL in config.js. (' + err.message + ')';
+      }
+    }
+
+    async function renderEditable() {
+      document.getElementById('locked-view').classList.add('hidden');
+      document.getElementById('edit-view').classList.remove('hidden');
+
+      movies = await apiGet('movies');
+      const rankings = await apiGet('rankings', { person });
+      draftByMovie = {};
+      rankings.forEach(r => { draftByMovie[r.movie_id] = r; });
+
+      const active = movies.filter(m => m.status === 'active');
+      active.sort((a, b) => {
+        const ra = draftByMovie[a.movie_id] ? draftByMovie[a.movie_id].rank : null;
+        const rb = draftByMovie[b.movie_id] ? draftByMovie[b.movie_id].rank : null;
+        if (ra == null && rb == null) return a.movie_id - b.movie_id;
+        if (ra == null) return 1;
+        if (rb == null) return -1;
+        return ra - rb;
+      });
+
+      const list = document.getElementById('ranking-list');
+      list.innerHTML = '';
+      active.forEach(m => list.appendChild(buildMovieRow(m)));
+
+      Sortable.create(list, {
+        handle: '.drag-handle',
+        animation: 150,
+        onEnd: scheduleSave
+      });
+
+      const abstained = movies.find(m => m.status === 'abstained');
+      const abstainedEl = document.getElementById('abstained-item');
+      abstainedEl.textContent = abstained
+        ? abstained.title + ' (' + abstained.year + ') — Abstained, not ranked.'
+        : '';
+
+      document.getElementById('submit-btn').onclick = onSubmit;
+    }
+
+    function buildMovieRow(movie) {
+      const li = document.createElement('li');
+      li.className = 'movie-row';
+      li.dataset.movieId = movie.movie_id;
+
+      const draft = draftByMovie[movie.movie_id];
+
+      li.innerHTML =
+        '<span class="drag-handle">&#8942;&#8942;</span>' +
+        '<span class="movie-title">' + escapeHtml(movie.title) + ' <span class="movie-year">(' + movie.year + ')</span></span>' +
+        '<textarea class="movie-note" placeholder="note (optional)">' + escapeHtml(draft ? draft.note : '') + '</textarea>';
+
+      li.querySelector('.movie-note').addEventListener('input', scheduleSave);
+      return li;
+    }
+
+    function currentRankings() {
+      const rows = Array.from(document.querySelectorAll('#ranking-list .movie-row'));
+      return rows.map((row, index) => ({
+        movie_id: Number(row.dataset.movieId),
+        rank: index + 1,
+        note: row.querySelector('.movie-note').value
+      }));
+    }
+
+    const scheduleSave = debounce(async () => {
+      const statusEl = document.getElementById('save-status');
+      statusEl.textContent = 'Saving…';
+      try {
+        const rankings = currentRankings();
+        const result = await apiPost('saveRanking', { person, rankings });
+        statusEl.textContent = result.error ? 'Save failed: ' + result.error : 'Saved';
+      } catch (err) {
+        statusEl.textContent = 'Save failed: ' + err.message;
+      }
+    }, 600);
+
+    async function onSubmit() {
+      if (!confirm('Submit your ranking? You can reset it later if needed.')) return;
+      const result = await apiPost('submit', { person });
+      if (result.error) {
+        alert(result.error);
+        return;
+      }
+      const status = await apiGet('status');
+      await renderLocked(status);
+    }
+
+    async function renderLocked(status) {
+      document.getElementById('edit-view').classList.add('hidden');
+      document.getElementById('locked-view').classList.remove('hidden');
+
+      if (!movies.length) movies = await apiGet('movies');
+      const rankings = await apiGet('rankings', { person });
+      const byMovie = {};
+      rankings.forEach(r => { byMovie[r.movie_id] = r; });
+      const active = movies.filter(m => m.status === 'active')
+        .slice()
+        .sort((a, b) => (byMovie[a.movie_id] ? byMovie[a.movie_id].rank : 0) - (byMovie[b.movie_id] ? byMovie[b.movie_id].rank : 0));
+
+      const list = document.getElementById('locked-list');
+      list.innerHTML = '';
+      active.forEach(m => {
+        const li = document.createElement('li');
+        li.className = 'movie-row read-only';
+        const note = byMovie[m.movie_id] ? byMovie[m.movie_id].note : '';
+        li.textContent = m.title + ' (' + m.year + ')' + (note ? ' — ' + note : '');
+        list.appendChild(li);
+      });
+
+      document.getElementById('reset-btn').onclick = onReset;
+      pollForReveal(status);
+    }
+
+    async function onReset() {
+      if (!confirm('Reset your submission and go back to editing?')) return;
+      if (pollTimer) clearInterval(pollTimer);
+      await apiPost('reset', { person });
+      document.getElementById('waiting-area').innerHTML = '';
+      await renderEditable();
+    }
+
+    function pollForReveal(status) {
+      const other = person === 'Andrew' ? 'Amelia' : 'Andrew';
+      const area = document.getElementById('waiting-area');
+      const render = (s) => {
+        if (s[other] && s[other].locked) {
+          area.innerHTML = '<p class="banner">Both ready — <a href="reveal.html">reveal!</a></p>';
+          if (pollTimer) clearInterval(pollTimer);
+        } else {
+          area.innerHTML = '<p>Waiting on ' + other + '…</p>';
+        }
+      };
+      render(status);
+      if (!(status[other] && status[other].locked)) {
+        pollTimer = setInterval(async () => {
+          const s = await apiGet('status');
+          render(s);
+        }, 5000);
+      }
+    }
+  </script>
+</body>
+</html>

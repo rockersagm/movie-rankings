@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reveal — 25 for '25</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>25 for '25 — Reveal</h1>
+  </header>
+
+  <main id="app">
+    <p id="loading">Loading…</p>
+
+    <div id="waiting-view" class="hidden">
+      <p class="banner">Waiting on <span id="waiting-names"></span>…</p>
+      <a href="rank.html">Back to ranking</a>
+    </div>
+
+    <div id="reveal-view" class="hidden">
+      <p class="abstained-note" id="abstained-note"></p>
+
+      <section class="stats-panel" id="stats-panel"></section>
+
+      <section>
+        <h2>Side by side</h2>
+        <div class="table-wrap">
+          <table id="compare-table">
+            <thead>
+              <tr>
+                <th data-sort="combined_rank">Combined</th>
+                <th data-sort="title">Title</th>
+                <th data-sort="andrew_rank">Andrew</th>
+                <th data-sort="amelia_rank">Amelia</th>
+                <th data-sort="delta">Delta</th>
+              </tr>
+            </thead>
+            <tbody id="compare-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>Biggest disagreements (delta &gt; 5)</h2>
+        <div id="diff-panel"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    let revealData = null;
+    let sortKey = 'combined_rank';
+    let sortAsc = true;
+
+    async function init() {
+      let data;
+      try {
+        data = await apiGet('reveal');
+      } catch (err) {
+        document.getElementById('loading').textContent =
+          'Could not reach the backend — check WEB_APP_URL in config.js. (' + err.message + ')';
+        return;
+      }
+      document.getElementById('loading').classList.add('hidden');
+      if (data.error === 'waiting_on') {
+        document.getElementById('waiting-view').classList.remove('hidden');
+        document.getElementById('waiting-names').textContent = data.waiting_on.join(', ');
+        return;
+      }
+      revealData = data;
+      document.getElementById('reveal-view').classList.remove('hidden');
+      renderAbstained();
+      renderStats();
+      renderTable();
+      renderDiffPanel();
+      document.querySelectorAll('#compare-table th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.dataset.sort;
+          if (sortKey === key) sortAsc = !sortAsc; else { sortKey = key; sortAsc = true; }
+          renderTable();
+        });
+      });
+    }
+
+    function renderAbstained() {
+      if (revealData.abstained) {
+        document.getElementById('abstained-note').textContent =
+          revealData.abstained.note + ' (' + revealData.abstained.title + ')';
+      }
+    }
+
+    function renderStats() {
+      const s = revealData.stats;
+      const panel = document.getElementById('stats-panel');
+      panel.innerHTML =
+        '<div class="stat"><span class="stat-label">Agreement score</span><span class="stat-value">' + s.agreement_score.toFixed(2) + '</span></div>' +
+        '<div class="stat"><span class="stat-label">Andrew&rsquo;s #1</span><span class="stat-value">' + escapeHtml(s.andrew_number_one) + '</span></div>' +
+        '<div class="stat"><span class="stat-label">Amelia&rsquo;s #1</span><span class="stat-value">' + escapeHtml(s.amelia_number_one) + (s.same_number_one ? ' 🎯 same pick!' : '') + '</span></div>' +
+        '<div class="stat"><span class="stat-label">Biggest shared love</span><span class="stat-value">' + escapeHtml(s.biggest_shared_love.title) + '</span></div>' +
+        '<div class="stat"><span class="stat-label">Biggest shared hate</span><span class="stat-value">' + escapeHtml(s.biggest_shared_hate.title) + '</span></div>' +
+        '<div class="stat"><span class="stat-label">Biggest disagreement</span><span class="stat-value">' + escapeHtml(s.biggest_disagreement.title) + ' (Δ' + s.biggest_disagreement.delta + ')</span></div>';
+    }
+
+    function renderTable() {
+      const rows = revealData.movies.slice().sort((a, b) => {
+        let cmp;
+        if (typeof a[sortKey] === 'string') cmp = a[sortKey].localeCompare(b[sortKey]);
+        else cmp = a[sortKey] - b[sortKey];
+        return sortAsc ? cmp : -cmp;
+      });
+      const body = document.getElementById('compare-body');
+      body.innerHTML = '';
+      rows.forEach(m => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td>' + m.combined_rank + '</td>' +
+          '<td>' + escapeHtml(m.title) + ' <span class="movie-year">(' + m.year + ')</span></td>' +
+          '<td>' + m.andrew_rank + '</td>' +
+          '<td>' + m.amelia_rank + '</td>' +
+          '<td>' + m.delta + '</td>';
+        body.appendChild(tr);
+      });
+    }
+
+    function renderDiffPanel() {
+      const diffs = revealData.movies.filter(m => m.delta > 5).slice().sort((a, b) => b.delta - a.delta);
+      const container = document.getElementById('diff-panel');
+      if (!diffs.length) {
+        container.textContent = 'No big disagreements — pretty aligned!';
+        return;
+      }
+      container.innerHTML = diffs.map(m =>
+        '<div class="diff-card">' +
+          '<h3>' + escapeHtml(m.title) + ' <span class="movie-year">(' + m.year + ')</span> — Δ' + m.delta + '</h3>' +
+          '<p><strong>Andrew (#' + m.andrew_rank + '):</strong> ' + escapeHtml(m.andrew_note || '—') + '</p>' +
+          '<p><strong>Amelia (#' + m.amelia_rank + '):</strong> ' + escapeHtml(m.amelia_note || '—') + '</p>' +
+        '</div>'
+      ).join('');
+    }
+
+    init();
+  </script>
+</body>
+</html>
