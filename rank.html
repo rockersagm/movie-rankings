@@ -12,7 +12,7 @@
     <h1>25 for '25</h1>
     <div class="whoami">
       Ranking as <strong id="person-name"></strong> — <a href="#" id="switch-person">not you?</a>
-      &nbsp;|&nbsp; <a href="reveal.html">View comparison &rarr;</a>
+      &nbsp;|&nbsp; <a href="reveal.html" id="view-comparison">View comparison &rarr;</a>
     </div>
   </header>
 
@@ -40,10 +40,23 @@
 
     if (person) {
       document.getElementById('person-name').textContent = person;
-      document.getElementById('switch-person').addEventListener('click', (e) => {
+      document.getElementById('switch-person').addEventListener('click', async (e) => {
         e.preventDefault();
+        await saveNow();
         localStorage.removeItem('movieRankingsPerson');
         window.location.href = 'index.html';
+      });
+      document.getElementById('view-comparison').addEventListener('click', async (e) => {
+        e.preventDefault();
+        await saveNow();
+        window.location.href = 'reveal.html';
+      });
+      // Belt-and-suspenders for tab close/refresh/typing-a-URL: a
+      // debounced save in flight would otherwise just get cancelled.
+      window.addEventListener('beforeunload', () => {
+        if (!document.getElementById('ranking-list').children.length) return;
+        const payload = JSON.stringify({ action: 'saveRanking', token: ACCESS_TOKEN, person, rankings: currentRankings() });
+        navigator.sendBeacon(WEB_APP_URL, new Blob([payload], { type: 'text/plain;charset=utf-8' }));
       });
       init();
     }
@@ -87,14 +100,7 @@
       // scheduleSave, since a quick nav to reveal.html would otherwise
       // cancel the pending save before it ever fires.
       if (rankings.length === 0) {
-        const statusEl = document.getElementById('save-status');
-        statusEl.textContent = 'Saving…';
-        try {
-          await apiPost('saveRanking', { person, rankings: currentRankings() });
-          statusEl.textContent = 'Saved';
-        } catch (err) {
-          statusEl.textContent = 'Save failed: ' + err.message;
-        }
+        await saveNow();
       }
 
       Sortable.create(list, {
@@ -160,7 +166,7 @@
       }));
     }
 
-    const scheduleSave = debounce(async () => {
+    async function saveNow() {
       const statusEl = document.getElementById('save-status');
       statusEl.textContent = 'Saving…';
       try {
@@ -170,7 +176,9 @@
       } catch (err) {
         statusEl.textContent = 'Save failed: ' + err.message;
       }
-    }, 600);
+    }
+
+    const scheduleSave = debounce(saveNow, 600);
   </script>
 </body>
 </html>

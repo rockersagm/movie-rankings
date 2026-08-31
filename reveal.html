@@ -101,6 +101,15 @@
       return '<span class="stat-value">' + escapeHtml(lean.genre) + ' <span class="stat-sub">(avg #' + lean.avg_rank.toFixed(1) + ')</span></span>';
     }
 
+    function genderLeanValue(lean) {
+      if (lean == null) return '<span class="stat-value">—</span>';
+      var bits = [];
+      if (lean.male_avg_rank != null) bits.push('male avg #' + lean.male_avg_rank.toFixed(1));
+      if (lean.female_avg_rank != null) bits.push('female avg #' + lean.female_avg_rank.toFixed(1));
+      var label = lean.lean === 'even' ? 'Even split' : lean.lean === 'male' ? 'Leans male-led' : 'Leans female-led';
+      return '<span class="stat-value">' + label + ' <span class="stat-sub">(' + bits.join(' · ') + ')</span></span>';
+    }
+
     function renderStats() {
       const s = revealData.stats;
       const panel = document.getElementById('stats-panel');
@@ -117,7 +126,9 @@
         statCard('Andrew&rsquo;s era lean', eraLeanValue(s.andrew_era_lean)) +
         statCard('Amelia&rsquo;s era lean', eraLeanValue(s.amelia_era_lean)) +
         statCard('Andrew&rsquo;s genre lean', genreLeanValue(s.andrew_genre_lean)) +
-        statCard('Amelia&rsquo;s genre lean', genreLeanValue(s.amelia_genre_lean));
+        statCard('Amelia&rsquo;s genre lean', genreLeanValue(s.amelia_genre_lean)) +
+        statCard('Andrew&rsquo;s gender lean', genderLeanValue(s.andrew_gender_lean)) +
+        statCard('Amelia&rsquo;s gender lean', genderLeanValue(s.amelia_gender_lean));
     }
 
     function formatDelta(d) {
@@ -157,6 +168,7 @@
         td.innerHTML =
           '<div class="movie-detail">' +
             '<p><strong>Genre:</strong> ' + escapeHtml(m.genre || '—') + '</p>' +
+            '<p><strong>Lead:</strong> ' + escapeHtml(m.lead_gender || '—') + '</p>' +
             '<p><strong>Director:</strong> ' + escapeHtml(m.director || '—') + '</p>' +
             '<p><strong>Starring:</strong> ' + escapeHtml(m.cast || '—') + '</p>' +
             '<p><strong>Oscar wins:</strong> ' + escapeHtml(m.oscar_wins || 'none') + '</p>' +
