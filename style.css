@@ -125,6 +125,7 @@ th:hover { color: var(--text); }
 .stat-label { display: block; color: var(--muted); font-size: 0.8rem; }
 .stat-value { display: block; font-size: 1.1rem; font-weight: 600; margin-top: 0.2rem; }
 .stat-value.stat-waiting { color: var(--muted); font-weight: 400; font-size: 0.95rem; }
+.stat-sub { color: var(--muted); font-weight: 400; font-size: 0.8rem; }
 
 .diff-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.75rem; }
 .diff-card h3 { margin: 0 0 0.4rem; font-size: 1rem; }
