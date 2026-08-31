@@ -115,7 +115,10 @@
 
       li.innerHTML =
         '<span class="drag-handle">&#8942;&#8942;</span>' +
-        '<span class="movie-title">' + escapeHtml(movie.title) + ' <span class="movie-year">(' + movie.year + ')</span></span>' +
+        '<span class="movie-title-block">' +
+          '<span class="movie-title">' + escapeHtml(movie.title) + ' <span class="movie-year">(' + movie.year + ')</span></span>' +
+          '<span class="movie-meta">' + escapeHtml(movie.director) + ' — Big Picture #' + movie.big_picture_rank + '</span>' +
+        '</span>' +
         '<textarea class="movie-note" placeholder="note (optional)">' + escapeHtml(draft ? draft.note : '') + '</textarea>';
 
       li.querySelector('.movie-note').addEventListener('input', scheduleSave);

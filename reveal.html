@@ -26,15 +26,18 @@
 
       <section>
         <h2>Side by side</h2>
+        <p class="hint">Click a row for director, cast, and Oscar detail.</p>
         <div class="table-wrap">
           <table id="compare-table">
             <thead>
               <tr>
-                <th data-sort="combined_rank">Combined</th>
+                <th data-sort="combined_rank">New Rank</th>
                 <th data-sort="title">Title</th>
                 <th data-sort="andrew_rank">Andrew</th>
                 <th data-sort="amelia_rank">Amelia</th>
                 <th data-sort="delta">Delta</th>
+                <th data-sort="big_picture_rank">Big Picture</th>
+                <th data-sort="big_picture_delta">Δ vs BP</th>
               </tr>
             </thead>
             <tbody id="compare-body"></tbody>
@@ -105,6 +108,12 @@
         '<div class="stat"><span class="stat-label">Biggest disagreement</span><span class="stat-value">' + escapeHtml(s.biggest_disagreement.title) + ' (Δ' + s.biggest_disagreement.delta + ')</span></div>';
     }
 
+    function formatDelta(d) {
+      if (d > 0) return '<span class="delta-up">+' + d + '</span>';
+      if (d < 0) return '<span class="delta-down">' + d + '</span>';
+      return '<span class="delta-flat">0</span>';
+    }
+
     function renderTable() {
       const rows = revealData.movies.slice().sort((a, b) => {
         let cmp;
@@ -116,13 +125,34 @@
       body.innerHTML = '';
       rows.forEach(m => {
         const tr = document.createElement('tr');
+        tr.className = 'movie-summary-row';
         tr.innerHTML =
           '<td>' + m.combined_rank + '</td>' +
           '<td>' + escapeHtml(m.title) + ' <span class="movie-year">(' + m.year + ')</span></td>' +
           '<td>' + m.andrew_rank + '</td>' +
           '<td>' + m.amelia_rank + '</td>' +
-          '<td>' + m.delta + '</td>';
+          '<td>' + m.delta + '</td>' +
+          '<td>#' + m.big_picture_rank + '</td>' +
+          '<td>' + formatDelta(m.big_picture_delta) + '</td>';
+
+        const detailTr = document.createElement('tr');
+        detailTr.className = 'movie-detail-row hidden';
+        const td = document.createElement('td');
+        td.colSpan = 7;
+        td.innerHTML =
+          '<div class="movie-detail">' +
+            '<p><strong>Director:</strong> ' + escapeHtml(m.director || '—') + '</p>' +
+            '<p><strong>Starring:</strong> ' + escapeHtml(m.cast || '—') + '</p>' +
+            '<p><strong>Oscar wins:</strong> ' + escapeHtml(m.oscar_wins || 'none') + '</p>' +
+            '<p><strong>Oscar losses:</strong> ' + escapeHtml(m.oscar_losses || 'not nominated') + '</p>' +
+            '<p><strong>Best Picture that year:</strong> ' + escapeHtml(m.best_picture_winner || '—') + '</p>' +
+          '</div>';
+        detailTr.appendChild(td);
+
+        tr.addEventListener('click', () => detailTr.classList.toggle('hidden'));
+
         body.appendChild(tr);
+        body.appendChild(detailTr);
       });
     }
 

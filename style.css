@@ -66,8 +66,10 @@ button.person-btn { min-width: 140px; padding: 0.8rem; }
 }
 .movie-row.read-only { padding: 0.5rem 0.8rem; }
 .drag-handle { cursor: grab; color: var(--muted); }
-.movie-title { flex: 0 0 auto; min-width: 200px; }
+.movie-title-block { flex: 0 0 auto; min-width: 220px; display: flex; flex-direction: column; gap: 0.15rem; }
+.movie-title { flex: 0 0 auto; }
 .movie-year { color: var(--muted); font-size: 0.85em; }
+.movie-meta { color: var(--muted); font-size: 0.78rem; }
 .movie-note {
   flex: 1;
   resize: vertical;
@@ -91,6 +93,16 @@ table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
 th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th { cursor: pointer; color: var(--muted); font-weight: 600; user-select: none; }
 th:hover { color: var(--text); }
+
+.movie-summary-row { cursor: pointer; }
+.movie-summary-row:hover { background: var(--panel); }
+.movie-detail-row td { white-space: normal; background: var(--panel); border-bottom: 1px solid var(--border); }
+.movie-detail p { margin: 0.3rem 0; color: var(--muted); }
+.movie-detail strong { color: var(--text); }
+
+.delta-up { color: #4caf6d; font-weight: 600; }
+.delta-down { color: var(--danger); font-weight: 600; }
+.delta-flat { color: var(--muted); }
 
 .stats-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
 .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem; }
