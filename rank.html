@@ -111,7 +111,7 @@
           '<span class="movie-title">' + escapeHtml(movie.title) + ' <span class="movie-year">(' + movie.year + ')</span></span>' +
           '<span class="movie-meta">' + escapeHtml(metaBits) + ' — Big Picture #' + movie.big_picture_rank + '</span>' +
         '</span>' +
-        '<textarea class="movie-note" placeholder="note (optional)">' + escapeHtml(draft ? draft.note : '') + '</textarea>';
+        '<textarea class="movie-note" placeholder="note">' + escapeHtml(draft ? draft.note : '') + '</textarea>';
 
       li.querySelector('.movie-note').addEventListener('input', scheduleSave);
       return li;

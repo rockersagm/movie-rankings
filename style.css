@@ -81,14 +81,15 @@ button.person-btn { min-width: 140px; padding: 0.8rem; }
   text-align: left;
 }
 .drag-handle { cursor: grab; color: var(--muted); }
-.movie-title-block { flex: 0 0 auto; min-width: 220px; display: flex; flex-direction: column; gap: 0.15rem; }
+.movie-title-block { flex: 0 0 320px; width: 320px; display: flex; flex-direction: column; gap: 0.15rem; overflow: hidden; }
 .movie-title { flex: 0 0 auto; }
 .movie-year { color: var(--muted); font-size: 0.85em; }
 .movie-meta { color: var(--muted); font-size: 0.78rem; }
 .movie-note {
   flex: 1;
   resize: none;
-  height: 2.4rem;
+  height: 3.4rem;
+  overflow-y: auto;
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
