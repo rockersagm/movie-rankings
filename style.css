@@ -65,6 +65,14 @@ button.person-btn { min-width: 140px; padding: 0.8rem; }
   margin-bottom: 0.5rem;
 }
 .movie-row.read-only { padding: 0.5rem 0.8rem; }
+.movie-rank {
+  flex: 0 0 auto;
+  width: 1.8rem;
+  text-align: right;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
 .drag-handle { cursor: grab; color: var(--muted); }
 .movie-title-block { flex: 0 0 auto; min-width: 220px; display: flex; flex-direction: column; gap: 0.15rem; }
 .movie-title { flex: 0 0 auto; }
